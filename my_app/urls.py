@@ -1,9 +1,7 @@
-from . import views
-from rest_framework import routers
+from .views import *
+from django.urls import path
 
-router = routers.DefaultRouter()
-router.register("users", views.UserViewSet , basename="users")
-router.register("groups", views.GroupViewSet , basename="groups")
-
-
-urlpatterns = router.urls
+urlpatterns = [
+    path('list/', StudentList.as_view(),name='student-list'),
+    path('student-detail/<int:pk>/', StudentDetail.as_view()),
+]

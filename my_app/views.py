@@ -1,18 +1,24 @@
-from django.shortcuts import render
-from django.contrib.auth.models import Group, User
-from rest_framework import permissions, viewsets
-from my_app.serializers import GroupSerializer, UserSerializer
+from rest_framework import generics
+from .models import Student
+from .serializers import StudentSerializer
+from .pagination import MyPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 
-# Create your views here.
-class UserViewSet(viewsets.ModelViewSet):
-    
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class StudentList(generics.ListCreateAPIView):
+
+    queryset = Student.objects.all().order_by('id')
+
+    serializer_class = StudentSerializer
+
+    pagination_class = MyPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['name', 'city']
+    ordering_fields = ['name']
 
 
-class GroupViewSet(viewsets.ModelViewSet):   
+class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
 
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = Student.objects.all().order_by('id')
+
+    serializer_class = StudentSerializer
