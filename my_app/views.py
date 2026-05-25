@@ -7,8 +7,12 @@ from rest_framework.filters import OrderingFilter
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.decorators import action
 
 ##################GenericAPIView with mixins ##################
+
 # class StudentList(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
    
 #     queryset = Student.objects.all().order_by('id')
@@ -44,37 +48,116 @@ from rest_framework.views import APIView
     
 ################### GenericAPIView  ##################
 
-class StudentList(generics.ListCreateAPIView):
+# class StudentList(generics.ListCreateAPIView):
 
-    queryset = Student.objects.all().order_by('id')
+#     queryset = Student.objects.all().order_by('id')
 
-    serializer_class = StudentSerializer
+#     serializer_class = StudentSerializer
 
-    pagination_class = MyPagination
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['name', 'city']
-    ordering_fields = ['name']
-
-
-class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
-
-    queryset = Student.objects.all().order_by('id')
-
-    serializer_class = StudentSerializer
+#     pagination_class = MyPagination
+#     filter_backends = [DjangoFilterBackend, OrderingFilter]
+#     filterset_fields = ['name', 'city']
+#     ordering_fields = ['name']
 
 
+# class StudentDetail(generics.RetrieveUpdateDestroyAPIView):
+
+#     queryset = Student.objects.all().order_by('id')
+
+#     serializer_class = StudentSerializer
+
+
+################### model viewset ##################
+
+# class StudentViewSet(viewsets.ModelViewSet):
+
+#     queryset = Student.objects.all().order_by('id')
+#     serializer_class = StudentSerializer
+
+#     pagination_class = MyPagination
+#     filter_backends = [DjangoFilterBackend, OrderingFilter]
+#     filterset_fields = ['name', 'city']
+#     ordering_fields = ['name']
+
+
+##################### Normal viewset ##################
+
+# class StudentList(APIView):
+
+#     def get(self, request):
+#         student = Student.objects.all()
+#         serializer = StudentSerializer(student, many=True)
+#         return Response(serializer.data)
+    
+#     def post(self, request):
+#         serializer = StudentSerializer(data=request.data, many=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=201)
+#         return Response(serializer.errors, status=400)
+
+
+# class StudentDetail(APIView):
+
+#     def get(self, request, pk):
+#         student = get_object_or_404(Student, pk=pk)
+#         serializer = StudentSerializer(student)
+#         return Response(serializer.data)
+
+#     def put(self, request, pk):
+#         student = get_object_or_404(Student, pk=pk)
+#         serializer = StudentSerializer(student, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=400)
+
+#     def patch(self, request, pk):
+#         student = get_object_or_404(Student, pk=pk)
+#         serializer = StudentSerializer(student, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=400)
+
+#     def delete(self, request, pk):
+#         student = get_object_or_404(Student, pk=pk)
+#         student.delete()
+#         return Response({"message": "Deleted successfully"}, status=204)
 
 ############## viewsets ##################
 
-class StudentViewSet(viewsets.ViewSet):
+class StudentViewSet(viewsets.ViewSet): 
+    pagination_class = MyPagination
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAdminUser]
+
+        return [permission() for permission in permission_classes]
+    
     def list(self, request):
         queryset = Student.objects.all().order_by('id')
-        serializer = StudentSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+
+        serializer = StudentSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+
+    def marks(self, request, pk=None):
+        return Response({"message": f"Marks of student {pk}"})
 
     def retrieve(self, request, pk=None):
-        student = Student.objects.get(pk=pk)
+        student = get_object_or_404(Student, pk=pk)
         serializer = StudentSerializer(student)
         return Response(serializer.data)
 
@@ -82,46 +165,26 @@ class StudentViewSet(viewsets.ViewSet):
         serializer = StudentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-        return Response(serializer.data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
     def update(self, request, pk=None):
-        student = Student.objects.get(pk=pk)
+        student = get_object_or_404(Student, pk=pk)
         serializer = StudentSerializer(student, data=request.data)
         if serializer.is_valid():
             serializer.save()
-        return Response(serializer.data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
-        student = Student.objects.get(pk=pk)
-        student.delete()
-        return Response({"message": "Deleted"})
-    
-
-################### model viewset ##################
-
-class StudentViewSet(viewsets.ModelViewSet):
-
-    queryset = Student.objects.all().order_by('id')
-    serializer_class = StudentSerializer
-
-    pagination_class = MyPagination
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['name', 'city']
-    ordering_fields = ['name']
-
-
-#####################normal viewset ##################
-
-class StudentList(APIView):
-
-    def get(self, request):
-        student = Student.objects.all()
-        serializer = StudentSerializer(student, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = StudentSerializer(data=request.data, many=True)
+    def partial_update(self, request, pk=None):
+        student = get_object_or_404(Student, pk=pk)
+        serializer = StudentSerializer(student, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=201)
+            return Response(serializer.data)
         return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        student = get_object_or_404(Student, pk=pk)
+        student.delete()
+        return Response({"message": "Deleted"})
