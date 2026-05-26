@@ -10,6 +10,8 @@ from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer, AdminRenderer
 
 ##################GenericAPIView with mixins ##################
 
@@ -75,10 +77,17 @@ from rest_framework.decorators import action
 #     serializer_class = StudentSerializer
 
 #     pagination_class = MyPagination
-#     filter_backends = [DjangoFilterBackend, OrderingFilter]
-#     filterset_fields = ['name', 'city']
-#     ordering_fields = ['name']
+#     # filter_backends = [DjangoFilterBackend, OrderingFilter]
+#     # filterset_fields = ['name', 'city']
+#     # ordering_fields = ['name']
 
+#     parser_classes = [JSONParser]
+
+#     renderer_classes = [
+#         AdminRenderer,
+#         JSONRenderer,
+#         BrowsableAPIRenderer
+#     ]
 
 ##################### Normal viewset ##################
 
@@ -130,6 +139,11 @@ from rest_framework.decorators import action
 class StudentViewSet(viewsets.ViewSet): 
     pagination_class = MyPagination
 
+    parser_classes = [JSONParser]
+    # parser_classes = [FormParser]
+
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             permission_classes = [IsAuthenticated]
@@ -137,7 +151,7 @@ class StudentViewSet(viewsets.ViewSet):
             permission_classes = [IsAdminUser]
 
         return [permission() for permission in permission_classes]
-    
+
     def list(self, request):
         queryset = Student.objects.all().order_by('id')
 
@@ -162,6 +176,7 @@ class StudentViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        print("Request data:", request.data)
         serializer = StudentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -187,4 +202,4 @@ class StudentViewSet(viewsets.ViewSet):
     def destroy(self, request, pk=None):
         student = get_object_or_404(Student, pk=pk)
         student.delete()
-        return Response({"message": "Deleted"})
+        return Response({"message": "Deleted"})     

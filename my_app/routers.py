@@ -14,5 +14,3 @@ class MyCustomRouter(DefaultRouter):
         ),
     ]
 
-    # learned and practiced ViewSet actions and custom routing (@action) in Django REST Framework.
-    # learned about routing in Django REST Framework, including SimpleRouter, DefaultRouter, Custom Routers, @action decorator, and DynamicRoute.
