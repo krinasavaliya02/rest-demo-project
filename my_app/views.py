@@ -175,17 +175,29 @@ class StudentViewSet(viewsets.ViewSet):
         serializer = StudentSerializer(student)
         return Response(serializer.data)
 
+    # def create(self, request):
+    #     print("Request data:", request.data)
+    #     serializer = StudentSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=400)
+
     def create(self, request):
         print("Request data:", request.data)
         serializer = StudentSerializer(data=request.data)
-        if serializer.is_valid():
+        print(serializer.initial_data)
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=400)
 
     def update(self, request, pk=None):
         student = get_object_or_404(Student, pk=pk)
         serializer = StudentSerializer(student, data=request.data)
+
+        print("INSTANCE:", serializer.instance)
+        print("INITIAL DATA:", serializer.initial_data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
