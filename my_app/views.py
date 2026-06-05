@@ -1,4 +1,4 @@
-from rest_framework import generics, mixins
+from rest_framework import generics, mixins, request
 from .models import Student
 from .serializers import StudentSerializer
 from .pagination import MyPagination
@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer, AdminRenderer
+from rest_framework.authentication import BasicAuthentication
 
 ##################GenericAPIView with mixins ##################
 
@@ -139,6 +140,9 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer, AdminRe
 class StudentViewSet(viewsets.ViewSet): 
     pagination_class = MyPagination
 
+    # authentication_classes = [BasicAuthentication]
+    # print("Authentication classes:", authentication_classes)
+
     parser_classes = [JSONParser]
     # parser_classes = [FormParser]
 
@@ -153,6 +157,9 @@ class StudentViewSet(viewsets.ViewSet):
         return [permission() for permission in permission_classes]
 
     def list(self, request):
+
+        print("USER:", request.user)
+        print("AUTH:", request.auth)
         queryset = Student.objects.all().order_by('id')
 
         search = request.query_params.get('search')
@@ -215,3 +222,4 @@ class StudentViewSet(viewsets.ViewSet):
         student = get_object_or_404(Student, pk=pk)
         student.delete()
         return Response({"message": "Deleted"})     
+    

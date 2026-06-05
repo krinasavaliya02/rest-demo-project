@@ -25,7 +25,7 @@ class StudentSerializer(serializers.ModelSerializer):
     # )
 
     course = CourseSerializer()
-    course_name = serializers.CharField(source='course.name', read_only=True)
+    # course_name = serializers.CharField(source='course.name', read_only=True)
 
     class Meta:
         model = Student
